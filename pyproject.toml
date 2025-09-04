@@ -1,0 +1,62 @@
+[project]
+name = "BDA-550"
+description = "BDA 550: Business Analytics Capstone"
+version = "0.0.0"
+authors = [
+    { name = "Moshe Rubin", email = "mosherubin137@gmail.com" },
+    { name = "BDA-550 Project Group 2 (Summer 2025)" },
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.12"
+
+
+########################################################################################
+##################################### Tool Configs #####################################
+########################################################################################
+
+[tool.mypy]
+# When in doubt, borrowed from pandas
+# https://github.com/pandas-dev/pandas/blob/417d1c94fe3810f695e94360a/pyproject.toml#L66
+# Import discovery
+ignore_missing_imports = true
+# Untyped definitions and calls
+check_untyped_defs = true
+# disallow_untyped_calls = true
+disallow_untyped_decorators = true
+disallow_untyped_defs = true
+disallow_any_generics = true
+# None and Optional handling
+no_implicit_optional = true
+# Configuring warnings
+warn_redundant_casts = true
+warn_unused_ignores = true
+# Miscellaneous strictness flags
+strict_equality = true
+# Configuring error messages
+pretty = true
+show_error_codes = true
+
+[tool.ruff]
+target-version = "py312"
+extend-include = ["*.ipynb"]
+
+[tool.ruff.lint]
+extend-select = ["ALL"]
+ignore = [
+    "COM812", # Conflicts with `ruff format` and raises a warning.
+    "D",      # Ignore docstrings (`pydocstyle`) checks.
+    "ERA",    # Allow commented-out code.
+    "FBT003", # Allow Boolean positional value in function call.
+    "ISC001", # Conflicts with `ruff format` and raises a warning.
+    "PD010",  # These `PD` rules are just outright wrong.
+    "PD015",  # These `PD` rules are just outright wrong.
+    "PD901",  # Avoid using the generic variable name `df` for DataFrames.
+    "T20",    # Allow `print` statements.
+    "RET",    # Allow return statements without an expression.
+    "ANN002", # Checks that function `*args` arguments have type annotations.
+    "ANN003", # Checks that function `**kwargs` arguments have type annotations.
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
