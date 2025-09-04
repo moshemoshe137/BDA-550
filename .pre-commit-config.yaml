@@ -2,12 +2,8 @@ default_stages: [pre-commit, pre-merge-commit, pre-push, prepare-commit-msg, com
     post-checkout, post-commit, post-merge, post-rewrite]
 
 exclude: |
-    (?x)(
+    (?x)
     \.(html|csv|svg)$  # Generic text file
-    |Scripts                           # Nate's code
-    |Documentation                     # Nate's code/documentation
-    |Initialize_Session\ -\ v.1.2.2.R  # Nate's code
-    )
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
