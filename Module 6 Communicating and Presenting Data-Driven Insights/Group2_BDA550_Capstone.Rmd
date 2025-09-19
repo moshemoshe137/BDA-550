@@ -1,0 +1,145 @@
+---
+title: "Predicting Student Success and Retention"
+author: "Group 2 (Alia Akbar, Begoña Andres, Ilya Busaev, Moshe Rubin)"
+date: "September 2025"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+# Introduction
+The purpose of this capstone project was to identify the key factors influencing student
+success and dropout rates and to provide data-driven recommendations for administrators
+and policymakers. We used an
+[open-source higher education dataset from Kaggle](https://www.kaggle.com/datasets/thedevastator/higher-education-predictors-of-student-retention/data)
+with demographic, academic, and socio-economic variables for 4,424 students.
+```r
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(readxl)
+library(janitor)
+library(scales)
+```
+# 1. Data Preparation
+
+## Load dataset
+```r
+student_dataset <- read_excel("D:/Alia Laptop/NLU/Courses/10-BDA-550 - Business Analytics Capstone/Final project Dataset/Dataset-Predict students' dropout and academic success.xls")
+View(student_dataset)
+```
+
+## Clean column names
+```r
+student_dataset <- student_dataset %>% clean_names()
+```
+
+---
+
+# 2. Descriptive Analysis
+
+## Total records
+```r
+nrow(student_dataset)
+```
+## Dropout count
+```r
+dropout_count <- sum(student_dataset$target == "Dropout")
+```
+
+## Dropout rate (%)
+```r
+dropout_rate <- (dropout_count / nrow(student_dataset)) * 100
+
+dropout_count
+dropout_rate
+```
+
+## Explanation:
+The dataset contains 4,424 students. Out of these, 1,421 students dropped out, which
+corresponds to a dropout rate of about 32%. This highlights the importance of
+identifying the main factors that influence retention.
+
+# 3. Feature Engineering
+
+## Approval ratios
+```r
+student_dataset <- student_dataset %>%
+  mutate(
+    approval_ratio_1st = ifelse(curricular_units_1st_sem_enrolled > 0,
+                                curricular_units_1st_sem_approved / curricular_units_1st_sem_enrolled, NA),
+    approval_ratio_2nd = ifelse(curricular_units_2nd_sem_enrolled > 0,
+                                curricular_units_2nd_sem_approved / curricular_units_2nd_sem_enrolled, NA),
+    approval_ratio_overall = rowMeans(cbind(approval_ratio_1st, approval_ratio_2nd), na.rm = TRUE)
+  )
+```
+## Overall grade
+```r
+student_dataset <- student_dataset %>%
+  mutate(
+    overall_grade = rowMeans(cbind(curricular_units_1st_sem_grade,
+                                   curricular_units_2nd_sem_grade), na.rm = TRUE)
+  )
+```
+
+## Grouped Summary: Approval Ratios and Grades
+
+```r
+ student_dataset %>%
+  mutate(retained = ifelse(target == "Dropout", "Dropout", "Retained")) %>%
+  group_by(retained) %>%
+  summarise(
+    avg_approval = mean(approval_ratio_overall, na.rm = TRUE),
+    avg_overall_grade = mean(overall_grade, na.rm = TRUE)
+  )
+```
+## Explanation:
+We engineered two key performance indicators:
+
+- Approval Ratios – the percentage of courses a student successfully completed in each
+  semester.
+
+- Overall Grade – the average grade across both semesters.
+
+- These metrics give us deeper insights into students’ academic performance beyond
+  simple pass/fail outcomes. Students who dropped out had an average approval ratio of
+  0.36 and an average grade of 6.58. Students who were retained had a much higher
+  approval ratio of 0.87 and an average grade of 12.3. This shows a clear performance
+  gap, suggesting that poor grades and low approval ratios are strong predictors of
+  dropout.
+
+- These insights were also used in Python work for the stacked bar chart.
+
+
+# 4. Visualization
+
+## Create `DropoutFlag` (1 = Dropout, 0 = Retained)
+```r
+student_dataset <- student_dataset %>%
+  mutate(dropout_flag = ifelse(target == "Dropout", 1, 0))
+```
+## Pivot or summarize to get avg dropout rate
+```r
+heatmap_data <- student_dataset %>%
+  group_by(scholarship_holder, tuition_fees_up_to_date) %>%
+  summarise(avg_dropout = mean(dropout_flag, na.rm = TRUE), .groups = 'drop')
+```
+
+## Heatmap
+```r
+ggplot(heatmap_data, aes(x = tuition_fees_up_to_date, y = scholarship_holder, fill = avg_dropout)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "white", high = "red", labels = scales::percent_format(accuracy = 1)) +
+  labs(title = "Financial Risk Heatmap",
+       x = "Tuition Fees Up to Date",
+       y = "Scholarship Holder",
+       fill = "Avg Dropout") +
+  theme_minimal()
+```
+
+## Explanation:
+The heatmap shows how financial factors correlate with dropout. Students without
+scholarships and not up to date with tuition have the highest dropout risk. Conversely,
+students with scholarships and up to date on tuition have the lowest dropout risk. This
+highlights that both academic performance and financial support play critical roles in
+student retention.
